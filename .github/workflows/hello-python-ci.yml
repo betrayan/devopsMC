@@ -1,0 +1,87 @@
+name: Hello Python App to Docker
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - main  
+        paths:
+        - 'Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/**'
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: hello-python-app
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python
+        run: pip install -r requirements.txt
+        shell: bash
+
+      - name: Run tests
+        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python
+        run: python -m py_compile main.py
+        shell: bash
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-python-artifacts
+          path: |
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/main.py
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/requirements.txt
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/dockerfile
+
+  build-docker:
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        run: |
+          echo "tags=hello-python-app:latest,hello-python-app:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python
+          file: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/dockerfile
+          push: false
+          tags: hello-python-app:latest,hello-python-app:${{ github.sha }}
+
+      - name: Save Docker image as tar
+        run: |
+          docker build -t hello-python-app:latest Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python
+          docker save hello-python-app:latest -o hello-python-app.tar
+        shell: bash
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-python-image
+          path: hello-python-app.tar
