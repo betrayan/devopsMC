@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node
-        run: npm ci
+        run: npm install
         shell: bash
 
       - name: Run tests
