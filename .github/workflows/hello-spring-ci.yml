@@ -19,9 +19,11 @@ jobs:
           java-version: 21
 
       - name: Build and test Spring Boot app
+        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring
         run: |
-          cd Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring
+          chmod +x mvnw
           ./mvnw -B clean package
+        shell: bash
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
