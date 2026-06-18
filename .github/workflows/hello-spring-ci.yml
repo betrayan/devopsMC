@@ -21,8 +21,7 @@ jobs:
       - name: Build and test Spring Boot app
         working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring
         run: |
-          chmod +x mvnw
-          ./mvnw -B clean package
+          mvn -B clean package
         shell: bash
 
       - name: Upload build artifacts
