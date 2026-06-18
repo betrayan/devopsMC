@@ -29,8 +29,7 @@ jobs:
         with:
           name: hello-spring-artifacts
           path: |
-            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target/*.jar
-            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target/surefire-reports/**
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target
 
   build-docker:
     needs: build-test
@@ -44,7 +43,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: hello-spring-artifacts
-          path: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring
+          path: downloaded-artifacts
+
+      - name: Ensure target directory exists in Docker context
+        run: |
+          mkdir -p Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target
+          find downloaded-artifacts -name '*.jar' -exec cp {} Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target/ \;
+          ls -la Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target
+        shell: bash
 
       - name: Build Docker image
         uses: docker/build-push-action@v5
