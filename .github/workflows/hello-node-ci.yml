@@ -1,8 +1,9 @@
 name: Hello Node App to Docker
 
 on:
-  push:
-    paths:
+    workflow_dispatch:
+    push:
+     paths:
       - 'Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node/**'
     
   
