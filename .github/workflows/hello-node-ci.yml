@@ -1,0 +1,100 @@
+name: Hello Node App to Docker
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: hello-node-app
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node
+        run: npm ci
+        shell: bash
+
+      - name: Run tests
+        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node
+        run: npm test --if-present
+        shell: bash
+
+      - name: Build Node app
+        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node
+        run: npm run build --if-present
+        shell: bash
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-node-artifacts
+          path: |
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node/node_modules
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node/package.json
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node/app.js
+
+  build-docker:
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node
+          file: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node/dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Save Docker image as tar
+        run: |
+          docker build -t hello-node-app:latest Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node
+          docker save hello-node-app:latest -o hello-node-app.tar
+        shell: bash
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-node-image
+          path: hello-node-app.tar
