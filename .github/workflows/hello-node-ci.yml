@@ -68,24 +68,16 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
+        run: |
+          echo "tags=hello-node-app:latest,hello-node-app:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node
           file: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/node/dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: false
+          tags: hello-node-app:latest,hello-node-app:${{ github.sha }}
 
       - name: Save Docker image as tar
         run: |
