@@ -110,4 +110,4 @@ pnpm-debug.log*
 *.dll
 *.exe
 
-.refact/
+*.refact/

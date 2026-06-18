@@ -1,0 +1,32 @@
+name: Hello Spring Boot App to Docker
+
+on:
+  push:
+    
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build and test Spring Boot app
+        run: |
+          cd Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring
+          ./mvnw -B clean package
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-spring-artifacts
+          path: |
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target/*.jar
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target/surefire-reports/**
