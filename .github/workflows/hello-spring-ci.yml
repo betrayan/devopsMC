@@ -46,10 +46,9 @@ jobs:
           path: downloaded-artifacts
 
       - name: Build JAR for Docker
+        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring
         run: |
-          mkdir -p Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target
-          find downloaded-artifacts -name '*.jar' -exec cp {} Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target/ \;
-          ls -la Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target
+          mvn -B clean package -DskipTests
         shell: bash
 
       - name: Login to DockerHub
