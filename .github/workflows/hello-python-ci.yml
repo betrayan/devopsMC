@@ -1,87 +1,80 @@
-name: Hello Python App to Docker
+name: Hello Python CI
 
 on:
-    workflow_dispatch:
-    push:
-        branches:
-            - main  
-        paths:
-        - 'Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/**'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/**"
+      - ".github/workflows/hello-python-ci.yml"
+
+permissions:
+  contents: read
 
 env:
-  REGISTRY: docker.io
+  APP_DIR: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python
   IMAGE_NAME: hello-python-app
 
 jobs:
-  build-test:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ${{ env.APP_DIR }}/requirements.txt
 
       - name: Install dependencies
-        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python
-        run: pip install -r requirements.txt
-        shell: bash
+        working-directory: ${{ env.APP_DIR }}
+        run: python -m pip install -r requirements.txt
 
-      - name: Run tests
-        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python
+      - name: Check Python syntax
+        working-directory: ${{ env.APP_DIR }}
         run: python -m py_compile main.py
-        shell: bash
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: hello-python-artifacts
-          path: |
-            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/main.py
-            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/requirements.txt
-            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/dockerfile
+      - name: Test Flask endpoint
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          python - <<'PY'
+          from main import app
 
-  build-docker:
-    needs: build-test
+          response = app.test_client().get("/")
+          assert response.status_code == 200
+          assert response.get_json()["message"] == "Hello from Simple App (Python Flask)"
+          PY
+
+  build-and-push:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Extract metadata
-        id: meta
-        run: |
-          echo "tags=hello-python-app:latest,hello-python-app:${{ github.sha }}" >> $GITHUB_OUTPUT
-
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
         with:
-          context: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python
-          file: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python/dockerfile
-          push: false
-          tags: hello-python-app:latest,hello-python-app:${{ github.sha }}
-
-      - name: Save Docker image as tar
-        run: |
-          docker build -t hello-python-app:latest Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/python
-          docker save hello-python-app:latest -o hello-python-app.tar
-        shell: bash
-
-      - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: hello-python-image
-          path: hello-python-app.tar
+          context: ${{ env.APP_DIR }}
+          file: ${{ env.APP_DIR }}/dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

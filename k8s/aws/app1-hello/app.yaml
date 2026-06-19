@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app1-hello
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-node
+  namespace: app1-hello
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-node
+  template:
+    metadata:
+      labels:
+        app: hello-node
+    spec:
+      containers:
+        - name: hello-node
+          image: hello-node-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: ENV_VALUE
+              value: aws
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-node
+  namespace: app1-hello
+spec:
+  type: LoadBalancer
+  selector:
+    app: hello-node
+  ports:
+    - port: 80
+      targetPort: 3000
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-python
+  namespace: app1-hello
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-python
+  template:
+    metadata:
+      labels:
+        app: hello-python
+    spec:
+      containers:
+        - name: hello-python
+          image: hello-python-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: ENV_VALUE
+              value: aws
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-python
+  namespace: app1-hello
+spec:
+  type: LoadBalancer
+  selector:
+    app: hello-python
+  ports:
+    - port: 80
+      targetPort: 3000
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-spring
+  namespace: app1-hello
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-spring
+  template:
+    metadata:
+      labels:
+        app: hello-spring
+    spec:
+      containers:
+        - name: hello-spring
+          image: hello-spring:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ENV_VALUE
+              value: aws
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-spring
+  namespace: app1-hello
+spec:
+  type: LoadBalancer
+  selector:
+    app: hello-spring
+  ports:
+    - port: 80
+      targetPort: 8080
