@@ -1,4 +1,4 @@
-name: Hello Spring Boot App to Docker
+name: Hello Spring Boot App to Docker EKS CI/CD
 
 on:
   workflow_dispatch:
