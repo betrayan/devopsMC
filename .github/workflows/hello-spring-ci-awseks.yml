@@ -1,0 +1,116 @@
+name: Hello Spring Boot App to Docker
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'docker/app1-hello/springboot/hello-spring/**'
+    
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build and test Spring Boot app
+        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring
+        run: |
+          mvn -B clean package
+        shell: bash
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-spring-artifacts
+          path: |
+            Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/target
+
+  build-docker:
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hello-spring-artifacts
+          path: downloaded-artifacts
+
+      - name: Build JAR for Docker
+        working-directory: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring
+        run: |
+          mvn -B clean package -DskipTests
+        shell: bash
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring
+          file: Full-Stack-AI-DevOps-Masterclass-main/docker/app1-hello/springboot/hello-spring/dockerfile
+          push: false
+          tags: hello-spring:latest
+
+      - name: Save Docker image as tar
+        run: |
+          docker save hello-spring:latest -o hello-spring.tar
+        shell: bash
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-spring-image
+          path: hello-spring.tar
+
+
+  docker-aws-deploy:
+     needs: build-docker
+     runs-on: ubuntu-latest
+
+     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: it-south-1
+        
+      - name: setup kubectl
+        uses: azure/setup-kubectl@v4
+    
+      - name: update kubeconfig for EKS 
+        run: |
+            aws eks update-kubeconfig --region it-south-1 --name hello-eks-cluster
+
+      - name: verify connection
+        run: kubectl get nodes
+
+      - name: deploy to EKS(kubernetes)
+        run: |
+          kubectl apply -f k8s/aws/app1-hello/app.yaml 
