@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: hello-node
-          image: hello-node-app:latest
+          image: betrayan/hello-node-app:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -61,7 +61,7 @@ spec:
     spec:
       containers:
         - name: hello-python
-          image: hello-python-app:latest
+          image: betrayan/hello-python-app:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -101,7 +101,7 @@ spec:
     spec:
       containers:
         - name: hello-spring
-          image: hello-spring:latest
+          image: betrayan/hello-spring:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
