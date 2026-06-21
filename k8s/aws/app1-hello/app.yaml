@@ -21,8 +21,8 @@ spec:
     spec:
       containers:
         - name: hello-node
-          image: betrayan/hello-node-app:latest
-          imagePullPolicy: IfNotPresent
+          image: mlvijay/hello-node:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
@@ -40,7 +40,8 @@ spec:
   selector:
     app: hello-node
   ports:
-    - port: 80
+    - protocol: TCP
+      port: 80
       targetPort: 3000
 
 ---
@@ -61,8 +62,8 @@ spec:
     spec:
       containers:
         - name: hello-python
-          image: betrayan/hello-python-app:latest
-          imagePullPolicy: IfNotPresent
+          image: mlvijay/hello-python:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
@@ -80,7 +81,8 @@ spec:
   selector:
     app: hello-python
   ports:
-    - port: 80
+    - protocol: TCP
+      port: 80
       targetPort: 3000
 
 ---
@@ -101,8 +103,8 @@ spec:
     spec:
       containers:
         - name: hello-spring
-          image: betrayan/hello-spring:latest
-          imagePullPolicy: IfNotPresent
+          image: mlvijay/hello-spring:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
@@ -120,5 +122,6 @@ spec:
   selector:
     app: hello-spring
   ports:
-    - port: 80
+    - protocol: TCP
+      port: 80
       targetPort: 8080
